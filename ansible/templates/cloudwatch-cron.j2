@@ -1,0 +1,9 @@
+AWS_ACCESS_KEY_ID="{{ aws_access_key_id }}"
+AWS_SECRET_ACCESS_KEY="{{ aws_secret_access_key }}"
+AWS_DEFAULT_REGION="{{ region }}"
+
+# */5 * * * * root /usr/local/cloudwatch/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-path=/ --disk-space-util --disk-space-used --disk-space-avail --from-cron --aws-access-key-id "{{ aws_access_key_id }}" --aws-secret-key "{{ aws_secret_access_key }}"
+
+*/5 * * * * root /usr/local/cloudwatch/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-path=/ --disk-space-util --disk-space-used --disk-space-avail --from-cron
+*/5 * * * * root /usr/local/cloudwatch/smartcoin/process-count.sh sshd sshd
+*/5 * * * * root /usr/local/cloudwatch/smartcoin/listening-port-count.sh sshd 22

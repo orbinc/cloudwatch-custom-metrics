@@ -1,0 +1,47 @@
+- hosts: all
+  become: true
+  vars:
+    basedir: "{{ playbook_dir|dirname }}"
+  vars_files:
+    - "{{ playbook_dir }}/vars/cloudwatch-vars.yml"
+    - "{{ playbook_dir }}/vars/secrets.yml"
+
+  tasks:
+    - name: Install dependencies
+      yum: update_cache=yes pkg={{ item }} state=latest
+      with_items:
+        - perl-Switch
+        - perl-DateTime
+        - perl-Sys-Syslog
+        - perl-LWP-Protocol-https
+        - awslogs
+      notify:
+        - restart awslogs
+
+    - name: Enable awslogs
+      service: name=awslogs enabled=yes
+
+    - name: Make sure /usr/local/cloudwatch/smartcoin exists
+      file: path=/usr/local/cloudwatch/smartcoin state=directory
+
+    - name: Deploy CloudWatch official monitoring scripts
+      unarchive: src=CloudWatchMonitoringScripts-1.2.1.zip dest=/usr/local/cloudwatch
+
+    - name: Deploy CloudWatch custom monitoring scripts
+      copy: src="{{ basedir }}/{{ item }}" dest="/usr/local/cloudwatch/smartcoin/{{ item }}" mode=0755
+      with_items:
+        - listening-port-count.sh
+        - process-count.sh
+
+    - name: Copy awslogs.conf
+      copy: src=awslogs.conf dest="/etc/awslogs/awslogs.conf"
+
+    - name: Deploy CloudWatch templates
+      template: src="{{ item.src }}" dest="{{ item.dest }}"
+      with_items:
+          - { src: "cloudwatch-cron.j2", dest: "/etc/cron.d/cloudwatch" }
+          - { src: "awscli.conf.j2", dest: "/etc/awslogs/awscli.conf" }
+
+  handlers:
+    - name: restart awslogs
+      service: name=awslogs state=restarted
